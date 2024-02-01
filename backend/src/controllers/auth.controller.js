@@ -48,7 +48,7 @@ const login = asyncHandler(async (req, res) => {
     }
   } else {
     res
-      .cookie("token", await generateToken(rows[0].userId, "7d"), {
+      .cookie("token", await generateToken(rows[0].userId, "1d"), {
         withCredentials: true,
         httpOnly: false,
       })
