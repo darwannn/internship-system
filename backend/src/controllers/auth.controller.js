@@ -32,10 +32,8 @@ const login = asyncHandler(async (req, res) => {
 
     if (result.affectedRows > 0) {
       const isSent = await sendEmailVerification(
-        "register",
-        rows[0].userId,
         rows[0].email,
-        code
+        `activate/${rows[0].userId}/${code}`
       );
       if (isSent) {
         console.log(rows[0].email);
@@ -58,6 +56,7 @@ const login = asyncHandler(async (req, res) => {
         message: "Login successful.",
       });
   }
+  throw new Error("Internal Server Error");
 });
 
 // @route   GET /auth/register
@@ -83,7 +82,10 @@ const register = asyncHandler(async (req, res) => {
   );
 
   if (result.affectedRows > 0) {
-    const isSent = await sendEmailVerification("register", userId, email, code);
+    const isSent = await sendEmailVerification(
+      email,
+      `activate/${userId}/${code}`
+    );
 
     if (isSent) {
       res.status(200).json({
@@ -93,6 +95,7 @@ const register = asyncHandler(async (req, res) => {
       });
     }
   }
+  throw new Error("Internal Server Error");
 });
 
 // @route   GET /auth/forgot-password
@@ -121,10 +124,8 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
   if (result.affectedRows > 0) {
     const isSent = await sendEmailVerification(
-      "new-password",
-      rows[0].userId,
       rows[0].email,
-      code
+      `new-password/${rows[0].userId}/${code}`
     );
 
     if (isSent) {
@@ -134,6 +135,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
       });
     }
   }
+  throw new Error("Internal Server Error");
 });
 
 // @route   PUT /auth/new-password/:id/:code
@@ -153,10 +155,8 @@ const newPassword = asyncHandler(async (req, res) => {
       success: true,
       message: "Password successfully changed",
     });
-  } else {
-    res.status(403);
-    throw new Error("Not authorized.");
   }
+  throw new Error("Internal Server Error");
 });
 
 // @route   PUT /auth/activate/:id/:code
@@ -169,18 +169,15 @@ const activateCode = asyncHandler(async (req, res, next) => {
     [0, "verified", id, code]
   );
 
-  if (result.affectedRows === 0) {
-    return res.status(403).json({
-      success: false,
-      message: "Not authorized.",
+  if (result.affectedRows > 0) {
+    return res.status(200).json({
+      success: true,
+      message:
+        "Your account has been activated. You can now login to your account.",
     });
   }
-
-  return res.status(200).json({
-    success: true,
-    message:
-      "Your account has been activated. You can now login to your account.",
-  });
+  res.status(403);
+  throw new Error("Not authorized.");
 });
 
 // @route   GET /auth/verify/:id/:code
@@ -193,17 +190,14 @@ const verifyCode = asyncHandler(async (req, res, next) => {
     [id, code]
   );
 
-  if (result.affectedRows === 0) {
-    return res.status(403).json({
-      success: false,
-      message: "Not authorized.",
+  if (result.affectedRows > 0) {
+    return res.status(200).json({
+      success: true,
+      message: "Authorized",
     });
   }
-
-  return res.status(200).json({
-    success: true,
-    message: "Authorized",
-  });
+  res.status(403);
+  throw new Error("Not authorized.");
 });
 
 export {

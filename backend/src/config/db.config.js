@@ -11,4 +11,3 @@ const pool = mysql
   })
   .promise();
 export { pool };
-console.log(process.env.PORT);
